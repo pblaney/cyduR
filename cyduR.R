@@ -677,6 +677,7 @@ safe_run({
   cli_alert_success("Replicates\t\t[ {opts$reps} ]")
   
   # Test success
+  cat("\n")
   cli_alert_success("All checks passed!")
 }, context = "Validating inputs")
 
@@ -725,7 +726,7 @@ safe_run({
     if(ncol(seq_name_parts) == 1) {
       fas_file_name <- paste0(opts$out_folder, seq_name_parts[1,1], '.fas')
     } else if(ncol(seq_name_parts) > 1) {
-      fas_file_name <- paste0(opts$out_folder, paste0(seq_name_parts[1:3], collapse = "_"), '.fas')
+      fas_file_name <- paste0(opts$out_folder, paste0(seq_name_parts[1,1:3], collapse = "_"), '.fas')
     }
     
     cli_alert_info("Writing [ {fas_file_name} ]")
@@ -777,16 +778,16 @@ safe_run({
                                               replacement = "_results.txt")
     if(!is.null(opts$motifs)) {
       # Build the command to run shmsim with motifs provided
-      cmd <- paste("~/CDUR/shmsim", 
+      cmd <- paste("/opt/toolshed/cyduR/shmsim", 
                    shuffle_file_name,
                    opts$motifs, 
                    ">", 
                    results_file_name)
       
       # Run the command
-      cat("\n")
       cli_alert_info("Running command:\n\n\t{cmd}")
       system(cmd, intern = FALSE)
+      cat("\n")
       
       # Check if delete flag is set to TRUE
       # run the clean-up
@@ -802,15 +803,16 @@ safe_run({
       }
     } else {
       # If motifs are not provided, run shmsim without motifs
-      cmd <- paste("~/CDUR/shmsim", 
+      cmd <- paste("/opt/toolshed/cyduR/shmsim", 
                    shuffle_file_name,
                    ">",
                    results_file_name)
       
       # Run the command
       cat("\n")
-      cli_alert_info("Running command:\n\n\t{cmd}")
+      cli_alert_info("Running command:\n\n{cmd}\n")
       system(cmd, intern = FALSE)
+      cat("\n")
     }
   }
   
