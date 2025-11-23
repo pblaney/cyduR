@@ -786,7 +786,7 @@ safe_run({
       # Run the command
       cat("\n")
       cli_alert_info("Running command:\n\n\t{cmd}")
-      #system(cmd, intern = FALSE)
+      system(cmd, intern = FALSE)
       
       # Check if delete flag is set to TRUE
       # run the clean-up
@@ -810,7 +810,7 @@ safe_run({
       # Run the command
       cat("\n")
       cli_alert_info("Running command:\n\n\t{cmd}")
-      #system(cmd, intern = FALSE)
+      system(cmd, intern = FALSE)
     }
   }
   
