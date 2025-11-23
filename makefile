@@ -1,0 +1,2 @@
+all:
+	g++ -O3 HotspotStatisticsReporter.cpp util.cpp StateVector.cpp Sequence.cpp Mutation.cpp scharff_utils.cpp ContinuousHistogram.cpp GeneticCode.cpp DiscreteHistogram.cpp MotifReference.cpp MotifIdentifier.cpp Motif.cpp EgnetProperties.cpp FrequencyDependentRandomizer.cpp Properties.cpp SequenceDataset.cpp StatsSampler.cpp BivariateNormalConditional.cpp generate.cpp analysis.cpp MotifMutationPair.cpp MotifMutationFrequency.cpp StatsSampler2Vars.cpp SimpleFastaReader.cpp RandomizedIota.cpp -I./ -I./tnt -o shmsim -lgsl -lgslcblas -lm -O
