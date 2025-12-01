@@ -260,7 +260,7 @@ n3 <- function(seq) {
     codon <- substr(seq, num - 2, num - 1)  # Get codon
     third_base <- substr(seq, num, num) # Get third nucleotide
     # Check if shuffling is possible and add `_Y_` flag
-    if (third_base %in% c("T", "C") && codon %in% c("TT", "TC", "TA", "TG", "CT", "CC", "CA", "CG", "AT", "AC", "AA", "AG", "GU", "GC", "GA", "GG")) { # TESTING IF GU instead of GT is cause
+    if (third_base %in% c("T", "C") && codon %in% c("TT", "TC", "TA", "TG", "CT", "CC", "CA", "CG", "AT", "AC", "AA", "AG", "GT", "GC", "GA", "GG")) {
       Y <- c(Y, third_base)  # Add third nucleotide to `Y`
       seq1 <- c(seq1, codon, "_Y_") # Append the codon and `_Y_` flag
     } else {
