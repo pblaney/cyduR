@@ -608,6 +608,55 @@ dn23 <- function(seq) {
   return(seq2)
 }
 
+null <- function(seq, reps, output_fasta) {
+  # Set the block size and number of iterations for the nullranges bootstrapping
+  block_length <- 5e5
+  iterations <- 5
+  
+  # Read in the eligible regions for sampling, using the high-confidence regions
+  # from Panmask https://github.com/lh3/panmask - hg38.pm151b-v3.easy.bed.gz
+  ranges <- rtracklayer::import(rtracklayer::BEDFile(resource = "hg38.pm151b-v3.easy.bed.gz"))
+  # Synergize the seqinfo
+  GenomeInfoDb::genome(ranges) <- "hg38"
+  GenomeInfoDb::seqlengths(ranges) <- seqlengths(BSgenome.Hsapiens.UCSC.hg38)[1:24]
+  
+  # Need to remove any N nucleotide sequences
+  # Build exclusion ranges from blacklist / bad mappability / telomeres / centromeres
+  exclusion_ranges <- rtracklayer::import(rtracklayer::BEDFile(resource = "exclusion_regions.hg38.bed"))
+  # Synergize the seqinfo
+  GenomeInfoDb::genome(exclusion_ranges) <- "hg38"
+  GenomeInfoDb::seqlengths(exclusion_ranges) <- seqlengths(BSgenome.Hsapiens.UCSC.hg38)[1:24]
+  
+  # Generate bootstraps
+  boots <- nullranges::bootRanges(y = ranges,
+                                  blockLength = block_length,
+                                  R = iterations,
+                                  exclude = exclusion_ranges,
+                                  excludeOption = "drop")
+  
+  # Subset similar width to input data
+  query_seq_len <- nchar(seq)
+  boots_width_eligible <- boots[dplyr::between(x = GenomicRanges::width(boots),
+                                               left = query_seq_len - (query_seq_len * 0.05),
+                                               right = query_seq_len + (query_seq_len * 0.05))]
+  
+  # Further subset to more reasonable number of sequences, set by the reps parameter 
+  boot_subset <- GenomicRanges::granges(sample(boots_width_eligible, size = reps))
+  
+  # Now need to extract the reference genome DNA sequence for each boot range
+  # and write the sequence to the shuffle FASTA file
+  for(i in 1:length(boot_subset)) {
+    fasta_string <- Biostrings::toString(Biostrings::getSeq(BSgenome.Hsapiens.UCSC.hg38, boot_subset[i]))
+    # Append the permuted sequence to the file
+    append_fasta_entry(fasta_file = output_fasta,
+                       entry = paste0(">replicate_", i, "\n", fasta_string, "\n"))
+    # Output progress
+    if(i %% 100 == 0) {
+      cli_alert_info("[ {i} ] shuffling iterations complete ...")
+    }
+  }
+}
+
 #########################
 #####   Execution   #####
 
@@ -624,7 +673,7 @@ option_list <- list(
   make_option(c("-i", "--input_file_name"), type = "character",
               help = "Input file name (FASTA format)"),
   make_option(c("-s", "--random_type"), type = "character", default = "n3",
-              help = "Shuffling method ('n3', 'gc3', 'dn23')"),
+              help = "Shuffling method ('n3', 'gc3', 'dn23', 'null')"),
   make_option(c("-r", "--reps"), type = "integer", default = 1000,
               help = "Replications of shuffled sequences"),
   make_option(c("-m", "--motifs"), type = "character", default = "./motif.txt",
@@ -661,7 +710,7 @@ safe_run({
   cli_alert_success("Output folder\t\t[ {opts$out_folder} ]")
   
   # Validate random type
-  valid_types <- c("n3", "gc3", "dn23")
+  valid_types <- c("n3", "gc3", "dn23", "null")
   if (!opts$random_type %in% valid_types) {
     stop("Invalid shuffling method. Use one of: ", paste(valid_types, collapse = ", "))
   }
@@ -728,28 +777,33 @@ safe_run({
     # 3. - Shuffle the FASTA sequences and append to shuffle FASTA
     # Run the shuffling algorithm
     # Append permuted sequences to the FASTA file
-    for (j in 1:opts$reps) {
-      # Start with the original sequence
-      outseq <- data[[eval(names_list[i])]]
-      
-      # Apply permutation function based on random_type
-      if (opts$random_type == "gc3") {
-        outseq <- gc3(outseq)
+    if(random_type %in% c("gc3","n3","dn23")) {
+      for (j in 1:opts$reps) {
+        # Start with the original sequence
+        outseq <- data[[eval(names_list[i])]]
         
-      } else if(opts$random_type == "n3") {
-        outseq <- n3(outseq)
+        # Apply permutation function based on random_type
+        if (opts$random_type == "gc3") {
+          outseq <- gc3(outseq)
+          
+        } else if(opts$random_type == "n3") {
+          outseq <- n3(outseq)
+          
+        } else if(opts$random_type == "dn23") {
+          outseq <- dn23(outseq)
+        }
         
-      } else if(opts$random_type == "dn23") {
-        outseq <- dn23(outseq)
+        # Output progress
+        if(j %% 100 == 0) {
+          cli_alert_info("[ {j} ] shuffling iterations complete ...")
+        }
+        # Append the permuted sequence to the file
+        append_fasta_entry(fasta_file = shuffle_file_name,
+                           entry = paste0(">replicate_", j, "\n", outseq, "\n"))
       }
       
-      # Output progress
-      if(j %% 100 == 0) {
-        cli_alert_info("[ {j} ] shuffling iterations complete ...")
-      }
-      # Append the permuted sequence to the file
-      append_fasta_entry(fasta_file = shuffle_file_name,
-                         entry = paste0(">replicate_", j, "\n", outseq, "\n"))
+    } else if(random_type == "null") {
+      null(seq = data[[eval(names_list[i])]], reps = opts$reps, output_fasta = shuffle_file_name)
     }
     
     # 4. - Run the statistics reporter
