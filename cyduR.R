@@ -777,7 +777,7 @@ safe_run({
     # 3. - Shuffle the FASTA sequences and append to shuffle FASTA
     # Run the shuffling algorithm
     # Append permuted sequences to the FASTA file
-    if(random_type %in% c("gc3","n3","dn23")) {
+    if(opts$random_type %in% c("gc3","n3","dn23")) {
       for (j in 1:opts$reps) {
         # Start with the original sequence
         outseq <- data[[eval(names_list[i])]]
@@ -802,7 +802,7 @@ safe_run({
                            entry = paste0(">replicate_", j, "\n", outseq, "\n"))
       }
       
-    } else if(random_type == "null") {
+    } else if(opts$random_type == "null") {
       null(seq = data[[eval(names_list[i])]], reps = opts$reps, output_fasta = shuffle_file_name)
     }
     
