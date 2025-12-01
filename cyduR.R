@@ -191,7 +191,7 @@ gc3 <- function(seq) {
     } else if (third_base %in% c("A", "G") && codon %in% c("TT", "CA", "AA", "AG", "GA")) {
       seq1 <- c(seq1, "_R_") # Purine (A or G)
       
-    } else if (substr(seq, num - 2, num + 1) %in% c("ATT", "ATC", "ATA")) {
+    } else if (substr(seq, num - 2, num) %in% c("ATT", "ATC", "ATA")) {
       seq1 <- c(seq1, "_H_") # Not G (A, C, or T)
       
     } else if (third_base %in% c("A", "G", "T", "C") && codon %in% c("TC", "CT", "CC", "CG", "AC", "GT", "GC", "GG")) {
@@ -207,23 +207,27 @@ gc3 <- function(seq) {
   # flags in "seq1", according to GC-content
   seq2 <- ""
   for (i in seq1) {
-    x <- runif(1) # Random number generation (between 0 and 1)
-    
     # Pyrimidine (C or T) 
     if (i == "_Y_") {
+      x <- runif(1) # Random number generation (between 0 and 1)
       # GC content test
       seq2 <- paste0(seq2, ifelse(x <= gc, "C", ifelse(x <= gc + at, "T", sample(c("T", "C"), 1))))
       
-      # Purine (A or G)
+    # Purine (A or G)
     } else if (i == "_R_") {
+      x <- runif(1) # Random number generation (between 0 and 1)
       # GC content test
       seq2 <- paste0(seq2, ifelse(x <= gc, "G", ifelse(x <= gc + at, "A", sample(c("A", "G"), 1))))
-      
+    
+    # Not G (A / C / T)
     } else if (i == "_H_") {
+      x <- runif(1) # Random number generation (between 0 and 1)
       # GC content test
       seq2 <- paste0(seq2, ifelse(x <= gc, "C", ifelse(x <= gc + at, sample(c("A", "T"), 1), sample(c("A", "T", "C"), 1))))
-      
+    
+    # Any (A / C / T / G)
     } else if (i == "_N_") {
+      x <- runif(1) # Random number generation (between 0 and 1)
       # GC content test
       seq2 <- paste0(seq2, ifelse(x <= gc, sample(c("G", "C"), 1), ifelse(x <= gc + at, sample(c("A", "T"), 1), sample(c("A", "G", "T", "C"), 1))))
       
@@ -256,7 +260,7 @@ n3 <- function(seq) {
     codon <- substr(seq, num - 2, num - 1)  # Get codon
     third_base <- substr(seq, num, num) # Get third nucleotide
     # Check if shuffling is possible and add `_Y_` flag
-    if (third_base %in% c("T", "C") && codon %in% c("TT", "TC", "TA", "TG", "CT", "CC", "CA", "CG", "AT", "AC", "AA", "AG", "GT", "GC", "GA", "GG")) {
+    if (third_base %in% c("T", "C") && codon %in% c("TT", "TC", "TA", "TG", "CT", "CC", "CA", "CG", "AT", "AC", "AA", "AG", "GU", "GC", "GA", "GG")) { # TESTING IF GU instead of GT is cause
       Y <- c(Y, third_base)  # Add third nucleotide to `Y`
       seq1 <- c(seq1, codon, "_Y_") # Append the codon and `_Y_` flag
     } else {
@@ -286,7 +290,7 @@ n3 <- function(seq) {
   # -----------------------------------------------------------
   seq1 <- c()
   for (num in seq(3, nchar(seq), by = 3)) {
-    codon <- substr(seq, num - 2, num -1)  # Get codon
+    codon <- substr(seq, num - 2, num - 1)  # Get codon
     third_base <- substr(seq, num, num) # Get third nucleotide
     # Check if shuffling is possible and add `_R_` flag
     if (third_base %in% c("A", "G") && codon %in% c("TT", "TC", "CT", "CC", "CA", "CG", "AC", "AA", "AG", "GT", "GC", "GA", "GG")) {
@@ -684,29 +688,6 @@ safe_run({
 # -----------------------------------------------------------
 # Main Script Logic
 
-# Nucleotides
-nts = c("A","C","G","T")
-
-# Amino Acid Translation Table
-tt <- list(
-  "TTT" = "F|Phe", "TTC" = "F|Phe", "TTA" = "L|Leu", "TTG" = "L|Leu",
-  "TCT" = "S|Ser", "TCC" = "S|Ser", "TCA" = "S|Ser", "TCG" = "S|Ser",
-  "TAT" = "Y|Tyr", "TAC" = "Y|Tyr", "TAA" = "*|Stp", "TAG" = "*|Stp",
-  "TGT" = "C|Cys", "TGC" = "C|Cys", "TGA" = "*|Stp", "TGG" = "W|Trp",
-  "CTT" = "L|Leu", "CTC" = "L|Leu", "CTA" = "L|Leu", "CTG" = "L|Leu",
-  "CCT" = "P|Pro", "CCC" = "P|Pro", "CCA" = "P|Pro", "CCG" = "P|Pro",
-  "CAT" = "H|His", "CAC" = "H|His", "CAA" = "Q|Gln", "CAG" = "Q|Gln",
-  "CGT" = "R|Arg", "CGC" = "R|Arg", "CGA" = "R|Arg", "CGG" = "R|Arg",
-  "ATT" = "I|Ile", "ATC" = "I|Ile", "ATA" = "I|Ile", "ATG" = "M|Met",
-  "ACT" = "T|Thr", "ACC" = "T|Thr", "ACA" = "T|Thr", "ACG" = "T|Thr",
-  "AAT" = "N|Asn", "AAC" = "N|Asn", "AAA" = "K|Lys", "AAG" = "K|Lys",
-  "AGT" = "S|Ser", "AGC" = "S|Ser", "AGA" = "R|Arg", "AGG" = "R|Arg",
-  "GTT" = "V|Val", "GTC" = "V|Val", "GTA" = "V|Val", "GTG" = "V|Val",
-  "GCT" = "A|Ala", "GCC" = "A|Ala", "GCA" = "A|Ala", "GCG" = "A|Ala",
-  "GAT" = "D|Asp", "GAC" = "D|Asp", "GAA" = "E|Glu", "GAG" = "E|Glu",
-  "GGT" = "G|Gly", "GGC" = "G|Gly", "GGA" = "G|Gly", "GGG" = "G|Gly"
-)
-
 safe_run({
   cli_h1("Starting Analysis")
   
@@ -763,7 +744,7 @@ safe_run({
       }
       
       # Output progress
-      if(j %% 50 == 0) {
+      if(j %% 100 == 0) {
         cli_alert_info("[ {j} ] shuffling iterations complete ...")
       }
       # Append the permuted sequence to the file
@@ -785,7 +766,8 @@ safe_run({
                    results_file_name)
       
       # Run the command
-      cli_alert_info("Running command:\n\n\t{cmd}")
+      cat("\n")
+      cli_alert_info("Running command:\n\n{cmd}")
       system(cmd, intern = FALSE)
       cat("\n")
       
@@ -810,7 +792,7 @@ safe_run({
       
       # Run the command
       cat("\n")
-      cli_alert_info("Running command:\n\n{cmd}\n")
+      cli_alert_info("Running command:\n\n{cmd}")
       system(cmd, intern = FALSE)
       cat("\n")
     }
