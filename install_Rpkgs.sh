@@ -14,15 +14,16 @@ for i in "${cran_deps[@]}"
         sleep 2
     done
 
-bioc_deps=(GenomeInfoDb GenomicRanges rtracklayer BSgenome.Hsapiens.UCSC.hg38 nullranges Biostrings)
-for i in "${bioc_deps[@]}"
-    do
-        echo 
-        echo "INSTALL - [ ${i} ]"
-        bioc_cmd="R -q -e 'remotes::install_bioc(\"${i}\")'"
-        (eval $bioc_cmd)
-        sleep 2
-    done
+echo "INSTALL - [ BSgenome.Hsapiens.UCSC.hg38 ]"
+bsgenome_cmd="R -q -e 'BiocManager::install(\"BSgenome.Hsapiens.UCSC.hg38\")'"
+(eval $bsgenome_cmd)
+sleep 2
+
+echo 
+echo "INSTALL - [ nullranges ]"
+nullranges_cmd="R -q -e 'remotes::install_bioc(\"nullranges\")'"
+(eval $nullranges_cmd)
+sleep 2
 
 echo 
 echo "Installation of R dependencies complete ..."
