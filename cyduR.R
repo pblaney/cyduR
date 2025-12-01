@@ -9,6 +9,13 @@ suppressPackageStartupMessages({
   library(optparse)
   library(cli)
   library(clisymbols)
+  library(GenomeInfoDb)
+  library(GenomicRanges)
+  library(rtracklayer)
+  library(BSgenome.Hsapiens.UCSC.hg38)
+  library(nullranges)
+  library(dplyr)
+  library(Biostrings)
 })
 
 #########################
